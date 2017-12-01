@@ -5,7 +5,7 @@ import time
 '''
 all days have the same input and should log the same output
 use this script to load the input file and main function from the module for a given day
-log out and dat/time to module folder
+log the output and date/time to the module folder
 
 usage:
 python run_day.py target_folder, method, input_file_name, write_output
@@ -13,14 +13,19 @@ python run_day.py target_folder, method, input_file_name, write_output
 
 
 def main(target_folder, method="part1", input_file_name="input.txt", write_output=False):
-    module = importlib.import_module(target_folder + ".main")
+    '''
+    target_folder:   string: name of folder where script and data for current day is
+    method:          string: name of method to call (for part one or two)
+    input_file_name: string: name of file containing data (used to read test files as well as real input)
+    write_output:    bool:   option to output of method to file to target_folder
+    '''
 
-    # read the first line of the file and pass it to the main function for the given day
+    module = importlib.import_module(target_folder + ".main")
     with open("{}/{}".format(target_folder, input_file_name)) as input_file:
         # read lines and remove new line chars
         data = map(lambda x: x.replace("\n", ""), input_file.readlines())
 
-    # call part 1 or part 2, apply to all lines in input_file
+    # call part1 or part2 method, apply function to all lines in input_file (used mainly for test input)
     output = list(map(getattr(module, method), data))
     if write_output:
         output_file_name = "{}/{}_{}.{}".format(target_folder, method, time.strftime("%Y-%m-%d_%H_%M"), "txt")
@@ -39,4 +44,3 @@ if __name__ == "__main__":
 
     # unpack additional args and pass to main function
     main(target_folder, *sys.argv[2:])
-
