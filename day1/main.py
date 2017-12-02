@@ -1,3 +1,6 @@
+def clean_data(data):
+    return data[0]
+
 def part1(data):
     to_sum = [0]
     for i in range(len(data)):
