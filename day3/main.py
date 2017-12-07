@@ -65,14 +65,14 @@ class SpiralGrid:
 class SpiralSumGrid(SpiralGrid):
     def __init__(self, min_num_in_grid):
         super().__init__(min_num_in_grid)
-        self.trav_order = self.get_traversal_order()
+        self.base_layer = SpiralGrid(min_num_in_grid)
         self.min_num_in_grid = min_num_in_grid
 
-    def get_traversal_order(self):
-        # get the index of each number in the grid
-        indexes = [self.get_location(num) for num in range(1, self.grid[-1][-1]+1)]
-        # remove any index that returns none because it's not in the grid
-        return [tup for tup in indexes if tup]
+    def get_location(self, number):
+        for i in range(len(self.base_layer.grid)):
+            for j in range(len(self.base_layer.grid)):
+                if self.base_layer.grid[i][j]==number:
+                    return i, j
 
 
     def spiral_sum(self):
@@ -85,14 +85,17 @@ class SpiralSumGrid(SpiralGrid):
         mid_index = self.height//2 
         self.grid[mid_index][mid_index] = 1
 
-        for index in self.trav_order:
-            y,x = index
-            replacement_num = self.get_sum(index)
-            if self.get_sum(index) > self.min_num_in_grid:
-                return replacement_num
-
-            print(replacement_num, self.min_num_in_grid)
+        num = 1
+        replacement_num = self.get_sum(self.get_location(num))
+        while replacement_num <= self.min_num_in_grid:
+            num += 1
+            location = self.get_location(num)
+            y,x = location
+            replacement_num = self.get_sum(location)
             self.grid[y][x] = replacement_num
+            print(replacement_num)
+
+        return replacement_num
 
     def get_sum(self, index):
         # get all indexes adjacent to one passed and add their values together
@@ -110,12 +113,6 @@ class SpiralSumGrid(SpiralGrid):
                 # if index isn't in grid, skip it
         return total
 
-    # def get_location_gt(self, number):
-    #     for index in self.trav_order:
-    #         if self.grid[index[0]][index[1]] > number:
-    #             return index
-
-
 
 def clean_data(data):
     return int(data[0])
@@ -131,9 +128,9 @@ def part1(data):
 
 
 def part2(data):
-    print(data)
+    # print(data)
     grid = SpiralSumGrid(data)
-    print(grid)
+    # print(grid)
     return grid.spiral_sum()
 
 
@@ -141,7 +138,8 @@ def part2(data):
 if __name__ == "__main__":
     user_input = int(input("number to search grid for: "))
     grid = SpiralSumGrid(user_input)
-    print(grid, grid.spiral_sum())
+    grid.spiral_sum()
+    # print(grid, grid.spiral_sum())
     # print(grid)
 
     # print(grid.get_location_gt(user_input))
