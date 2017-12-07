@@ -15,12 +15,24 @@ def print_data(i, data):
 
 def part1(data):
     i, count = 0, 0
-    print_data(count, data)
     while i < len(data):
+        jump = data[i]
         data[i]+=1
-        print(i, data[i], i+data[i])
-        i = data[i] if data[i] >= 0 else i + data[i]
+        i += jump
         count += 1
-        print_data(i, data)
+        # print_data(i, data)
     return count
 
+def part2(data):
+    i, count = 0, 0
+    # print_data(count, data)
+    while i < len(data):
+        jump = data[i]
+        if jump >= 3:
+            data[i]-=1
+        else:
+            data[i]+=1
+        i += jump
+        count += 1
+        # print_data(i, data)
+    return count   
