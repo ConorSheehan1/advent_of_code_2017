@@ -19,18 +19,27 @@ def compress_similar(data):
     return data
 
 
-def part1(data):
+def part1(data, return_data=False):
     data = remove_opposites(data)
     data = compress_similar(data)
     # print(data)
+    if return_data:
+        return data
     return len(data)
 
+
+# super slow, takes ~5 minutes even with pypy
 def part2(data):
     max_distance = 0
+    data_slice = [data[0]]
     limit = len(data)
-    for i in range(limit):
+    for i in range(1, limit):
         print(i, limit)
-        new_distance = part1(data[:i+1])
+        # don't recompute remove_oposites and compress similar for start of list every time
+        # instead append new instruction to already compressed list
+        data_slice.append(data[i])
+        data_slice = part1(data_slice, return_data=True)
+        new_distance = len(data_slice)
         if new_distance > max_distance:
             max_distance = new_distance
             # print(max_distance)
