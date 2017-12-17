@@ -1,17 +1,65 @@
+from collections import OrderedDict
+
 def clean_data(data):
     return list(map(int, data[0].split(",")))
 
-def part1(data):
-    i = 0
-    skip_size = 0
-    knot = list(range(256))
+def reverse_selection(knot, i, length):
+    selection = []
+    indexes = []
+    for index in range(i, i+length):
+        currnet_index = index%len(knot)
+        selection.append(knot[currnet_index])
+        indexes.append(currnet_index)
+    # print("selection", selection, "indexes", indexes)
+    # reverse the selection
+    selection = selection[::-1]
+    # add back into list (mutate knot inplace)
+    for replace_index in indexes:
+        knot[replace_index] = selection.pop(0)
+
+def to_hex(num):
+    hex_rep = hex(num).split("x")[-1]
+    if len(hex_rep) == 1:
+        return "0"+hex_rep
+    return hex_rep
+
+def part1(data, part2=False, i=0, skip=0):
+    size = 256
+    knot = list(range(size))
     for length in data:
-        # plus 1?
-        knot_section = knot[i%len(knot):(i+length)%len(knot)]
-        # reverse section
-        knot[i%len(knot):(i+length)%len(knot)] = knot_section[::-1]
-        i += length + skip_size
-        skip_size += 1
-    print(knot)
-    return knot[0] * knot[1]
-    # 7140 too low
+        # print(knot, i, skip)
+        if length > size:
+            continue
+        reverse_selection(knot, i, length)
+        i += length + skip
+        skip += 1
+        # print(i)
+    # print(knot, i%len(knot), skip)
+    if part2:
+        return knot, i, skip
+    return knot[0]*knot[1]
+
+def part2(data):
+    string_data = ",".join(map(str, data))
+    print(string_data)
+    bytes_data = [ord(char) for char in string_data]
+    bytes_data.extend([17, 31, 73, 47, 23])
+    # bytes_data = [3, 4, 1, 5, 17, 31, 73, 47, 23]
+    i, skip = 0, 0
+    for round in range(64):
+        print(bytes_data)
+        if round <= 1:
+            print("round", i, skip)
+        sparse_hash, i, skip = part1(bytes_data, part2=True, i=i, skip=skip)
+    print(i, skip, "\n\n")
+    dense_hash = []
+    chunk_size = 16
+    # print(sparse_hash)
+    for i in range(0, len(sparse_hash), chunk_size):
+        # xor each 16 bit chunk and add to the dense hash
+        dense_hash.append(eval("^".join(map(str, sparse_hash[i:i+chunk_size]))))
+    print(dense_hash)
+    return "".join([to_hex(num) for num in dense_hash])
+
+
+

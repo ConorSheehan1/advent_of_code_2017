@@ -5,6 +5,14 @@ def clean_data(data):
         d[int(k)] = {"pos":0,"range":int(v), "up":True}
     return d
 
+# def print_data(data):
+#     # lines is equivilant to highest range
+#     top_line = "\t".join(list(map(str, range(max(data.keys())+1))))
+#     for i in range(max(data.values(), key=lambda x: x['range'])["range"]):
+#         pass
+#     print(top_line)
+
+
 def increment_scanners(data):
     for v in data.values():
         position = v["pos"]
@@ -17,6 +25,12 @@ def increment_scanners(data):
         else:
             v["pos"] -= 1
 
+def reset_scanners(data, offset):
+    for k in data.keys():
+        data[k]["pos"] = 0
+    for i in range(offset):
+        increment_scanners(data)
+    # print(data)
 
 def part1(data):
     caught = []
@@ -30,5 +44,21 @@ def part1(data):
     return sum(caught)
 
 def part2(data):
-    pass
+    start = 26900
+    last_position = max(data.keys())
+    while True:
+        start +=1
+        # print(start)
+        reset_scanners(data, start)
+        # print(data)
+        for i in range(last_position+1):
+            if i in data.keys():
+                if data[i]["pos"] == 0:
+                    print("caught", start)
+                    break
+            # print("not caught", i)
+            increment_scanners(data)
+        else:
+            return start    
 
+# 10366 too low
