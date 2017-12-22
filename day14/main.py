@@ -5,46 +5,68 @@ sys.path.append("..")
 from day10 import main
 
 def clean_data(data):
-  return data[0]
+    return data[0]
 
 
-# # count all the ones in the hashes
-# def part1(data):
-#   # return bin(int("a0c2017", 16))[2:]
-#   # test output is 8188 not 8108
-#   total = 0
-#   for i in range(128):
-#     current = "{}-{}".format(data, i)
-#     current_hex = main.part2(current)
-#     # exclud leading 0b
-#     current_binary = bin(int(current_hex,16))[2:]
-#     current_binary = "0" * (128 - len(current_binary)) + current_binary
+# count all the ones in the hashes
+def part1(data, part2=False):
+    # return bin(int("a0c2017", 16))[2:]
+    grid = []
+    total = 0
+    for i in range(128):
+        current = "{}-{}".format(data, i)
+        current_hex = main.part2(current)
+        # exclud leading 0b
+        current_binary = bin(int(current_hex,16))[2:]
+        current_binary = "0" * (128 - len(current_binary)) + current_binary
+    
+        if part2:
+            grid.append(current_binary)
+        else:
+            total += current_binary.count("1")
 
-#     total += current_binary.count("1")
-#   return total
+    if part2:
+        return grid
+    return total
 
 #8180 too low
 #8188 too low
 
-from collections import Counter
-def part1(puzzleInput):
-    puzzleInput = puzzleInput.strip()
-    binaryString = ""
-    for i in range(0,128):
-        row = str(main.part2(puzzleInput+"-"+str(i)))
-        binaryRow = bin(int(row, 16))[2:]
-        binaryRow = "0" * (128 - len(binaryRow)) + binaryRow
-        binaryString += binaryRow
+# def dfs(grid, i, j, num_regions):
+#     print(i, j)
+#     # if the index is out of bound return None
+#     if not (0 <= i < 128) or not (0 <= j < 128):
+#         return 
+#     if grid[i][j] == "1":
+#         grid[i] = "{}{}{}".format(grid[i][:j], num_regions+2, grid[i][j+1:])
+#     else:
+#         return
+#     # below
+#     dfs(grid, i+1, j, num_regions)
+#     # left
+#     dfs(grid, i, j-1, num_regions)
+#     # right
+#     dfs(grid, i, j+1, num_regions)
+#     return True
 
-    c = Counter(list(binaryString))
+# def create_group(grid, i, j, num_regions):
+#     for row in grid[i:]:
+#         current = row[j]
+#         if current == "1":
+#             left = row[j-1]
+#             right = row[j+1]
+#             below = grid[i+1][j]
 
-    # return c["1"]
-    return binaryString.count("1")
 
 
-# import numpy as np
-# from scipy.ndimage.measurements import label
-
-# def part1(data):
-#     s = ''.join(f"{int(main.part2(f'{data}-{i}'), 16):0128b}" for i in range(128))
-#     return s.count('1'), label(np.fromiter(s, dtype=int).reshape(128, 128))[1]
+def part2(data):
+    grid = part1(data, part2=True)
+    regions = 0
+    # there are zeros and ones already, so anything above one will be a region
+    for i, row in enumerate(grid):
+        for j, char in enumerate(row):
+            if char == "1":
+                # if a new group was created, increment regions
+                if dfs(grid, i, j, regions):
+                    regions += 1
+    return regions
