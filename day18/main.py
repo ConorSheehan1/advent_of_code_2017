@@ -53,7 +53,10 @@ def part1(data):
 
 
     
-def process(id, inq, outq, manager, instructions):   
+def process(id, inq, outq, manager, instructions):  
+    # multiprocessing manager dict doesn't support nested dict assignment
+    # https://bugs.python.org/issue6766
+    # # manager[id]["stopped"] = False 
     ci = 0
     manager[f"stopped{id}"] = False
     manager[f"send_count{id}"] = 0
