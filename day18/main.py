@@ -1,6 +1,4 @@
 import string
-import multiprocessing
-import time
 
 def clean_data(data):
     return list(map(lambda x: x.split(" "), data))
@@ -9,7 +7,7 @@ def clean_data(data):
 def get_data(registers, index):
     if index[-1].isnumeric():
         return int(index)
-    return registers[index][-1]
+    return registers[index]#[-1]
 
 
 def part1(data):
@@ -51,77 +49,74 @@ def part1(data):
         ci += 1
 
 
+class Worker():
+    def __init__(self, id, inq, outq, instructions):
+        self.id = id
+        self.inq = inq
+        self.outq = outq
+        self.instructions = instructions
+        self.ci = 0
+        self.stopped = False
+        self.send_count = 0
+        self.registers = {v[1]:id for v in instructions if v[1] in string.ascii_lowercase}
 
-    
-def process(id, inq, outq, manager, instructions):  
-    # multiprocessing manager dict doesn't support nested dict assignment
-    # https://bugs.python.org/issue6766
-    # # manager[id]["stopped"] = False 
-    ci = 0
-    manager[f"stopped{id}"] = False
-    manager[f"send_count{id}"] = 0
-    registers = {v[1]:[id] for v in instructions if v[1] in string.ascii_lowercase}
-    time.sleep(1)
-    while not manager[f"stopped{id}"]:
-        print(id, instructions[ci])
-        instruction = instructions[ci]
+    def __repr__(self):
+        # return f"id: {self.id} ci: {self.ci} current instruction: {self.instructions[self.ci]}, inq {self.inq}, outq {self.outq}"
+        return f"{self.id} {self.ci} {self.registers}"
+
+
+    def process(self): 
+        if self.ci >= len(self.instructions) -1:
+            print(f"stopped {self.id} out of bounds")
+            self.stopped = True
+            return 
+
+        instruction = self.instructions[self.ci]
         if instruction[0] == "set":
-            set_value = get_data(registers, instruction[2])
-            registers[instruction[1]].append(set_value)
+            set_value = get_data(self.registers, instruction[2])
+            self.registers[instruction[1]] = set_value
         elif instruction[0] == "add":
             # in order to keep previous value, add old value to add value, then append left
-            add_value = get_data(registers, instruction[2])
-            add_value += registers[instruction[1]][-1]
-            registers[instruction[1]].append(add_value)
+            add_value = get_data(self.registers, instruction[2])
+            add_value += self.registers[instruction[1]]
+            self.registers[instruction[1]] = add_value
         elif instruction[0] == "mul":
-            mul_value = get_data(registers, instruction[2])
-            mul_value *= registers[instruction[1]][-1]
-            registers[instruction[1]].append(mul_value)
+            mul_value = get_data(self.registers, instruction[2])
+            mul_value *= self.registers[instruction[1]]
+            self.registers[instruction[1]] = mul_value
         elif instruction[0] == "mod":
-            mod_value = get_data(registers, instruction[2])
-            mod_value = registers[instruction[1]][-1] % mod_value
-            registers[instruction[1]].append(mod_value)
+            mod_value = get_data(self.registers, instruction[2])
+            mod_value = self.registers[instruction[1]] % mod_value
+            self.registers[instruction[1]] = mod_value
+
         elif instruction[0] == "snd":
-            outq.put(get_data(registers, instruction[1]))
-            manager[f"send_count{id}"] += 1
+            self.outq.append(get_data(self.registers, instruction[1]))
+            self.send_count += 1
         elif instruction[0] == "rcv":
-            # add latest value in queue to register, if nothing is in queue wait
-            manager[f"stopped{id}"] = True
-            time.sleep(1)
-            print(id, "stop", manager[f"stopped{id}"])
-            registers[instruction[1]] = inq.get(block=True)
-            print(id, "restart", manager[f"stopped{id}"])
-            manager[f"stopped{id}"] = False
+            if self.inq:
+                self.registers[instruction[1]] = self.inq.pop(0)
+                self.stopped = False
+            else:
+                self.stopped = True
+                print(f"stopped {self.id} no data in inq")
+                # don't increase ci, need to try this instruction again
+                return
         elif instruction[0] == "jgz":
-            if get_data(registers, instruction[1]) > 0:
-                ci += get_data(registers, instruction[2])
+            if get_data(self.registers, instruction[1]) > 0:
+                self.ci += get_data(self.registers, instruction[2])
                 # skip the normal step of increasing current position by 1
-                continue
-        ci += 1
-    manager[f"stopped{id}"] = True
+                return
+        self.ci += 1
 
 def part2(data):
-    q0, q1 = multiprocessing.Queue(), multiprocessing.Queue()
-    manager = multiprocessing.Manager()
-    stopped_dict = manager.dict()
-    # worker one gets data from queue one and puts data in queue zero and vice versa
-    # w0 = worker(data, q0, q1, 0)
-    # w1 = worker(data, q1, q0, 1)
+    q0, q1 = [], []
+    w0 = Worker(0, q0, q1, data[:])
+    w1 = Worker(1, q1, q0, data[:])
 
-    p0 = multiprocessing.Process(target=process, args=(0, q0, q1, stopped_dict, data))
-    p1 = multiprocessing.Process(target=process, args=(1, q1, q0, stopped_dict, data))
-    # p.start()
-    # if both queues are empty or both programs are finished, stop
-    p0.start()
-    p1.start()
-    time.sleep(1)
-    while not stopped_dict["stopped0"] and not stopped_dict["stopped1"]:
-        print(stopped_dict["stopped0"], stopped_dict["stopped1"])
-        time.sleep(2)
-        pass
-    print("done")
-    p0.terminate()
-    p1.terminate()
-    return stopped_dict["send_count0"], stopped_dict["send_count1"]
+    while not (w0.stopped and w1.stopped):
+        w0.process()
+        w1.process()
 
-# 127 too low
+    return w1.send_count
+
+# # 127 too low
