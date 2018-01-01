@@ -31,6 +31,8 @@ class Map:
         self.xlimit = len(data[0])
         self.ylimit = len(data)
 
+        self.steps = 0
+
     def __repr__(self):
         return f"{self.direction} current {self.data[self.xy[1]][self.xy[0]]} xy: {self.xy} letters: {self.letters}"
 
@@ -97,11 +99,13 @@ class Map:
             new_direction = self.direction
             # move twice to skip over the corssing line
             self.xy = self.apply_offset(offset=self.sd[self.direction])
+            self.steps += 1
 
 
         self.direction = new_direction
         print("switching to", self.direction)
         self.xy = self.apply_offset(offset=self.sd[self.direction])
+        self.steps += 1
 
     def solve(self):
         while True:
@@ -122,6 +126,7 @@ class Map:
             if self.could_go(self.direction):
                 # print("continuing")
                 self.xy = self.apply_offset(offset=self.sd[self.direction])
+                self.steps += 1
             else:
                 # print("changing")
                 self.try_other_direction()
@@ -132,6 +137,12 @@ def part1(data):
     m = Map(data)
     m.solve()
     return "".join(m.letters)
+
+
+def part2(data):
+    m = Map(data)
+    m.solve()
+    return m.steps+1
 
 
 
