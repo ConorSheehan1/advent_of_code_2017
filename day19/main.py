@@ -25,7 +25,7 @@ class Map:
         self.ylimit = len(data)
 
     def __repr__(self):
-        return f"current {self.data[self.xy[1]][self.xy[0]]} xy: {self.xy} letters: {self.letters}"
+        return f"{self.direction} current {self.data[self.xy[1]][self.xy[0]]} xy: {self.xy} letters: {self.letters}"
 
     def apply_offset(self, offset=[0,0]):
         return list(map(lambda x: sum(x), zip(self.xy, offset)))
@@ -39,8 +39,20 @@ class Map:
         # if the index is out of bounds, return Empty string
         return ""
 
+    # using current location
     def can_go(self, direction):
         return (direction in self.map_paths[self.current]) or self.current.isalpha()
+
+    # using possible new location
+    def could_go(self, direction):
+        next_char = self.try_get(self.sd[direction])
+        if next_char.isalpha():
+            return True
+        for k, v in self.map_paths.items():
+            if direction in v and k == next_char:
+                return True
+        return False
+
 
     def get_surrounding_options(self):
         options = {}
@@ -68,14 +80,21 @@ class Map:
                 # not setting up backtracking yet
                 else:
                     if self.direction in vertical:
-                        for direction in horiztonal:
-                            tmp_xy = self.apply_offset(self.sd[direction])
-                            if self.can_go():
-                                pass
+                        if self.try_get(self.sd["left"]) == "-":
+                            self.direction = "left"
+                        elif self.try_get(self.sd["right"]) == "-":
+                            self.direction = "right"
+                    elif self.direction in horizontal:
+                        print("horizontal")
+                        if self.try_get(self.sd["up"]) == "|":
+                            self.direction = "up"
+                        elif self.try_get(self.sd["down"]) == "|":
+                            self.direction = "down"
+                    self.xy = self.apply_offset(offset=self.sd[self.direction])
 
+                print("cross", self.xy, self.direction)
             # if you can, keep going the same way
             elif self.can_go(self.direction):
-                print("keep")
                 self.xy = self.apply_offset(self.sd[self.direction])
             else:
                 break
