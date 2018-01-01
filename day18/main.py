@@ -4,6 +4,7 @@ def clean_data(data):
     return list(map(lambda x: x.split(" "), data))
 
 # if it's an integer, return the integer, otherwise get the latest value put in the deque
+# if part1 use [-1], otherwise just return value
 def get_data(registers, index):
     if index[-1].isnumeric():
         return int(index)
