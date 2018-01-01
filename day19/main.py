@@ -12,6 +12,9 @@ class Map:
         # double directions
         self.dd = {k*2:list(map(lambda x: x*2, v)) for k,v in self.sd.items()}
 
+        self.horizontal = ["left", "right"]
+        self.vertical = ["up", "down"]
+
         # starting point is the only charater in the first line that isn't white space
         start_char = data[0].strip() 
         self.xy = [data[0].index(start_char), 0]
@@ -50,6 +53,7 @@ class Map:
             return True
         for k, v in self.map_paths.items():
             if direction in v and k == next_char:
+                print("could_go", direction, v, k, next_char)
                 return True
         return False
 
@@ -61,43 +65,77 @@ class Map:
                 options[key] = self.try_get(offset=value)
         return options
 
+    def try_other(self, directions):
+        for direction in directions:
+            if self.could_go(direction):
+                return direction
+
+
+    def try_other_direction(self):
+        if self.direction in self.vertical:
+            self.direction = self.try_other(self.horizontal)
+        else:
+            self.direction = self.try_get(self.vertical)
+        self.xy = self.apply_offset(offset=self.sd[self.direction])
+
     def solve(self):
-        horizontal = ["left", "right"]
-        vertical = ["up", "down"]
         while True:
             print(self)
-            current = self.data[self.xy[1]][self.xy[0]]
+            self.current = self.data[self.xy[1]][self.xy[0]]
             # if you hit a letter, keep going the same way
-            if current.isalpha():
-                self.letters.append(current)
+            if self.current.isalpha():
+                self.letters.append(self.current)
                 self.xy = self.apply_offset(offset=self.sd[self.direction])
-            # if you're at a crossroads, try to keep going the same way
-            elif current == "+":
+            # if you're at a crossroads
+            elif self.current == "+":
                 options = self.get_surrounding_options()
-                if options[self.direction] != "":
+                # try to keep going the same way
+                if options[self.direction].strip() != "":
+                    print("cross same", options[self.direction])
+                    print(options)
                     self.xy = self.apply_offset(offset=self.sd[self.direction])
                 # if you can't, try switching from vertical movement to horizontal
                 # not setting up backtracking yet
                 else:
-                    if self.direction in vertical:
-                        if self.try_get(self.sd["left"]) == "-":
-                            self.direction = "left"
-                        elif self.try_get(self.sd["right"]) == "-":
-                            self.direction = "right"
-                    elif self.direction in horizontal:
-                        print("horizontal")
-                        if self.try_get(self.sd["up"]) == "|":
-                            self.direction = "up"
-                        elif self.try_get(self.sd["down"]) == "|":
-                            self.direction = "down"
-                    self.xy = self.apply_offset(offset=self.sd[self.direction])
+                    print("cross different")
+                    self.try_other_direction()
+                    # if self.direction in vertical:
+                    #     for direction in horizontal:
+                    #         if self.could_go(direction):
+                    #             self.direction = direction
+                    # elif self.direction in horizontal:
+                    #     for direction in vertical:
+                    #         if self.could_go(direction):
+                    #             self.direction = direction
+                    # self.xy = self.apply_offset(offset=self.sd[self.direction])
 
-                print("cross", self.xy, self.direction)
+                # print("cross", self.xy, self.direction)
             # if you can, keep going the same way
-            elif self.can_go(self.direction):
-                self.xy = self.apply_offset(self.sd[self.direction])
+            elif self.could_go(self.direction):
+                print("can go")
+                self.xy = self.apply_offset(offset=self.sd[self.direction])
             else:
-                break
+                # break
+
+                self.try_other_direction()
+                # print("cant", direction, self.can_go(self.direction), )
+                # if self.direction in vertical:
+                #     print("vert")
+                #     for direction in horizontal:
+                #         if self.could_go(direction):
+                #             self.direction = direction
+                #             break
+                # elif self.direction in horizontal:
+                #     print("horiz")
+                #     for direction in vertical:
+                #         if self.could_go(direction):
+                #             print("could go", direction)
+                #             self.direction = direction
+                #             break
+                #     else:
+                #         print("fail")
+
+                # self.xy = self.apply_offset(offset=self.sd[self.direction])
 
 
 
